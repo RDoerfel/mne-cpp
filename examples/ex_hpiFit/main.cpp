@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
     MatrixXd matPosition;              // matPosition matrix to save quaternions etc.
 
     // setup informations for HPI fit (VectorView)
-    QVector<int> vecFreqs {155,165,190,220};
+    QVector<int> vecFreqs {155,165,190,200};
     QVector<double> vecError;
     double dError = 0.0;
     VectorXd vecGoF;
@@ -204,6 +204,7 @@ int main(int argc, char *argv[])
                   vecGoF,
                   fittedPointSet,
                   pFiffInfo);
+
     qInfo() << "Ordered Frequencies: ";
     qInfo() << "findOrder() took" << timer.elapsed() << "milliseconds";
     qInfo() << "[done]";
@@ -212,7 +213,7 @@ int main(int argc, char *argv[])
     double dMeanErrorDist = 0.0;
 
     // read and fit
-    for(int i = 0; i < vecTime.size(); i++) {
+    for(int i = 0; i < 50; i++) {
         from = first + vecTime(i)*pFiffInfo->sfreq;
         to = from + iQuantum;
         if (to > last) {
@@ -224,13 +225,12 @@ int main(int argc, char *argv[])
             qCritical("error during read_raw_segment");
             return -1;
         }
-        qInfo() << "[done]";
 
-        qInfo() << "HPI-Fit...";
         timer.start();
+        transDevHead = pFiffInfo->dev_head_t;
         HPI.fitHPI(matData,
                    matProjectors,
-                   pFiffInfo->dev_head_t,
+                   transDevHead,
                    vecFreqs,
                    vecError,
                    vecGoF,
@@ -241,17 +241,16 @@ int main(int argc, char *argv[])
         fTimer = timer.elapsed();
         dMeanErrorDist = std::accumulate(vecError.begin(), vecError.end(), .0) / vecError.size();
 
-        qInfo() << "Error" << dMeanErrorDist  * 1000;
-        qInfo() << "[done]";
+        qInfo() << "vecError" << vecError;
+        qInfo() << "Mean Error in mm" << dMeanErrorDist  * 1000;
 
         HPIFit::storeHeadPosition(vecTime(i), pFiffInfo->dev_head_t.trans, matPosition, vecGoF, vecError);
         matPosition(i,9) = fTimer;
         // only update transformation matrix if error is smaller then threshold. otherwise use old one.
-        dError = std::accumulate(vecError.begin(), vecError.end(), .0) / vecError.size();
-        if(dError < 0.010) {
+
+        if(dMeanErrorDist < 0.010) {
             pFiffInfo->dev_head_t = transDevHead;
         } else {
-            qInfo() << "Large error.";
         }
 
     }
