@@ -127,7 +127,7 @@ void HPIFit::fitHPI(const MatrixXd& t_mat,
         return;
     }
 
-    bool bUpdateModel = false;
+    bool bUpdateModel = true;
 
     // check if bads have changed and update coils/channellist if so
     if(!(m_lBads == pFiffInfo->bads) || m_lChannels.isEmpty()) {
@@ -272,7 +272,7 @@ void HPIFit::fitHPI(const MatrixXd& t_mat,
         for (int j = 0; j < vecChIdcs.rows(); ++j) {
             if(vecChIdcs(j) < pFiffInfo->chs.size()) {
                 Vector3f r0 = pFiffInfo->chs.at(vecChIdcs(j)).chpos.r0;
-                matCoilPos.row(j) = (-1 * pFiffInfo->chs.at(vecChIdcs(j)).chpos.ez * 0.03 + r0).cast<double>();
+                matCoilPos.row(j) = (-1 * pFiffInfo->chs.at(vecChIdcs(j)).chpos.ez * 0.015 + r0).cast<double>();
             }
         }
     } else {
