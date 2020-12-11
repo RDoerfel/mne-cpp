@@ -211,6 +211,13 @@ int main(int argc, char *argv[])
 
     float fTimer = 0.0;
     double dMeanErrorDist = 0.0;
+    vecError << 1 << 2 << 3 << 4;
+    qDebug() << vecError;
+    vecError.clear();
+    qDebug() << vecError;
+    vecError.append(1);
+    qDebug() << vecError;
+
 
     // read and fit
     for(int i = 0; i < 50; i++) {
