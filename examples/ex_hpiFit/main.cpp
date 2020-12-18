@@ -194,30 +194,10 @@ int main(int argc, char *argv[])
     qInfo() << "[done]";
 
     // order frequencies
-    qInfo() << "Find Order...";
-    timer.start();
-    HPI.findOrder(matData,
-                  matProjectors,
-                  pFiffInfo->dev_head_t,
-                  vecFreqs,
-                  vecError,
-                  vecGoF,
-                  fittedPointSet,
-                  pFiffInfo);
-
-    qInfo() << "Ordered Frequencies: ";
-    qInfo() << "findOrder() took" << timer.elapsed() << "milliseconds";
-    qInfo() << "[done]";
 
     float fTimer = 0.0;
     double dMeanErrorDist = 0.0;
     vecError << 1 << 2 << 3 << 4;
-    qDebug() << vecError;
-    vecError.clear();
-    qDebug() << vecError;
-    vecError.append(1);
-    qDebug() << vecError;
-
 
     // read and fit
     for(int i = 0; i < 50; i++) {
@@ -261,6 +241,6 @@ int main(int argc, char *argv[])
         }
 
     }
-    qInfo() << "mena error:" << matPosition.col(8).mean();
+    qInfo() << "mean error:" << matPosition.col(8).mean() * 1000;
     // IOUtils::write_eigen_matrix(matPosition, QCoreApplication::applicationDirPath() + "/MNE-sample-data/position.txt");
 }
