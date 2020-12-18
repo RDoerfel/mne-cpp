@@ -334,6 +334,20 @@ void HPIFit::fitHPI(const MatrixXd& t_mat,
         fittedPointSet << digPoint;
     }
 
+    // Initialize inner layer sensors
+    MatrixXd coilpos = Eigen::MatrixXd::Zero(m_vecInnerind.size(),3);
+    MatrixXd coilori = Eigen::MatrixXd::Zero(m_vecInnerind.size(),3);
+    MatrixXd tra  = Eigen::MatrixXd::Identity(m_vecInnerind.size(),m_vecInnerind.size());
+
+    for(int i = 0; i < m_vecInnerind.size(); i++) {
+        coilpos(i,0) = pFiffInfo->chs[m_vecInnerind.at(i)].chpos.r0[0];
+        coilpos(i,1) = pFiffInfo->chs[m_vecInnerind.at(i)].chpos.r0[1];
+        coilpos(i,2) = pFiffInfo->chs[m_vecInnerind.at(i)].chpos.r0[2];
+        coilori(i,0) = pFiffInfo->chs[m_vecInnerind.at(i)].chpos.ez[0];
+        coilori(i,1) = pFiffInfo->chs[m_vecInnerind.at(i)].chpos.ez[1];
+        coilori(i,2) = pFiffInfo->chs[m_vecInnerind.at(i)].chpos.ez[2];
+    }
+
     if(bDoDebug) {
         // DEBUG HPI fitting and write debug results
         std::cout << std::endl << std::endl << "HPIFit::fitHPI - dpfiterror" << coil.dpfiterror << std::endl << std::endl;
@@ -348,6 +362,15 @@ void HPIFit::fitHPI(const MatrixXd& t_mat,
         if(!QDir(sHPIResourceDir).exists()) {
             QDir().mkdir(sHPIResourceDir);
         }
+
+        UTILSLIB::IOUtils::write_eigen_matrix(coilpos, QString("%1/%2_coilPosOld_mat").arg(sHPIResourceDir).arg(sTimeStamp));
+        UTILSLIB::IOUtils::write_eigen_matrix(coilori, QString("%1/%2_coilOriOld_mat").arg(sHPIResourceDir).arg(sTimeStamp));
+        UTILSLIB::IOUtils::write_eigen_matrix(tra, QString("%1/%2_coilTraOld_mat").arg(sHPIResourceDir).arg(sTimeStamp));
+        UTILSLIB::IOUtils::write_eigen_matrix(m_sensors.rmag, QString("%1/%2_coilPosNew_mat").arg(sHPIResourceDir).arg(sTimeStamp));
+        UTILSLIB::IOUtils::write_eigen_matrix(m_sensors.cosmag, QString("%1/%2_coilOriNew_mat").arg(sHPIResourceDir).arg(sTimeStamp));
+        UTILSLIB::IOUtils::write_eigen_matrix(m_sensors.tra, QString("%1/%2_coilTraNew_mat").arg(sHPIResourceDir).arg(sTimeStamp));
+
+        UTILSLIB::IOUtils::write_eigen_matrix(m_sensors.w, QString("%1/%2_coilW_mat").arg(sHPIResourceDir).arg(sTimeStamp));
 
         UTILSLIB::IOUtils::write_eigen_matrix(matCoilPos, QString("%1/%2_coilPosSeed_mat").arg(sHPIResourceDir).arg(sTimeStamp));
 
@@ -636,7 +659,7 @@ void HPIFit::storeHeadPosition(float fTime,
 void HPIFit::updateSensor()
 {
     // Create MEG-Coils and read data
-    int iAcc = 2;
+    int iAcc = 0;
     int iNch = m_lChannels.size();
 
     if(iNch == 0) {

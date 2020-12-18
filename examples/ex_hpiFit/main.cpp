@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
 
     // if debugging files are necessary set bDoDebug = true;
     QString sHPIResourceDir = QCoreApplication::applicationDirPath() + "/HPIFittingDebug";
-    bool bDoDebug = false;
+    bool bDoDebug = true;
 
     // Init HpiFit
     bool bDoFastFit = false;
@@ -197,7 +197,6 @@ int main(int argc, char *argv[])
 
     float fTimer = 0.0;
     double dMeanErrorDist = 0.0;
-    vecError << 1 << 2 << 3 << 4;
 
     // read and fit
     for(int i = 0; i < 50; i++) {
@@ -237,9 +236,7 @@ int main(int argc, char *argv[])
 
         if(dMeanErrorDist < 0.010) {
             pFiffInfo->dev_head_t = transDevHead;
-        } else {
         }
-
     }
     qInfo() << "mean error:" << matPosition.col(8).mean() * 1000;
     // IOUtils::write_eigen_matrix(matPosition, QCoreApplication::applicationDirPath() + "/MNE-sample-data/position.txt");
