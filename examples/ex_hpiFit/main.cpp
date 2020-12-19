@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
     bool bDoDebug = true;
 
     // Init HpiFit
-    bool bDoFastFit = false;
+    bool bDoFastFit = true;
     pFiffInfo->linefreq = 60;
     HPIFit HPI = HPIFit(pFiffInfo,bDoFastFit);
 
