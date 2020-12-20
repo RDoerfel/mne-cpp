@@ -223,11 +223,10 @@ void HPIFit::fitHPI(const MatrixXd& t_mat,
     MatrixXd matAmp(m_vecInnerind.size(), iNumCoils);
     MatrixXd matAmpC(m_vecInnerind.size(), iNumCoils);
 
-    matTopo = m_matModel * matInnerdata.transpose(); // topo: # of good inner channel x 8
+    matTopo = matInnerdata * m_matModel.transpose(); // topo: # of good inner channel x 8
 
     if(m_bDoFastFit) {
         // Select sine or cosine component depending on the relative size
-        matTopo.transposeInPlace();
         matAmp = matTopo.leftCols(iNumCoils);
         matAmpC = matTopo.rightCols(iNumCoils);
         for(int j = 0; j < iNumCoils; ++j) {
@@ -256,7 +255,7 @@ void HPIFit::fitHPI(const MatrixXd& t_mat,
     for (int j = 0; j < iNumCoils; j++) {
         int iChIdx = 0;
         VectorXd::Index indMax;
-        matAmp.col(j).maxCoeff(&indMax);
+        matAmp.col(j).cwiseAbs().maxCoeff(&indMax);
         if(indMax < m_vecInnerind.size()) {
             iChIdx = m_vecInnerind.at(indMax);
         }
@@ -268,7 +267,7 @@ void HPIFit::fitHPI(const MatrixXd& t_mat,
     MatrixXd matCoilPos = MatrixXd::Zero(iNumCoils,3);
 
     // Generate seed point by projection the found channel position 3cm inwards if previous transDevHead is identity or bad fit
-    if(transDevHead.trans == MatrixXd::Identity(4,4).cast<float>() || dError > 0.010) {
+    if(true) {
         for (int j = 0; j < vecChIdcs.rows(); ++j) {
             if(vecChIdcs(j) < pFiffInfo->chs.size()) {
                 Vector3f r0 = pFiffInfo->chs.at(vecChIdcs(j)).chpos.r0;
@@ -336,41 +335,35 @@ void HPIFit::fitHPI(const MatrixXd& t_mat,
 
     if(bDoDebug) {
         // DEBUG HPI fitting and write debug results
-        std::cout << std::endl << std::endl << "HPIFit::fitHPI - dpfiterror" << coil.dpfiterror << std::endl << std::endl;
-        std::cout << std::endl << std::endl << "HPIFit::fitHPI - Initial seed point for HPI coils" << std::endl << matCoilPos << std::endl;
-        std::cout << std::endl << std::endl << "HPIFit::fitHPI - temp" << std::endl << matTemp << std::endl;
-        std::cout << std::endl << std::endl << "HPIFit::fitHPI - testPos" << std::endl << matTestPos << std::endl;
-        std::cout << std::endl << std::endl << "HPIFit::fitHPI - Diff fitted - original" << std::endl << matDiffPos << std::endl;
-        std::cout << std::endl << std::endl << "HPIFit::fitHPI - dev/head trans" << std::endl << matTrans << std::endl;
-
         QString sTimeStamp = QDateTime::currentDateTime().toString("yyMMdd_hhmmss");
 
         if(!QDir(sHPIResourceDir).exists()) {
             QDir().mkdir(sHPIResourceDir);
         }
 
-        UTILSLIB::IOUtils::write_eigen_matrix(matCoilPos, QString("%1/%2_coilPosSeed_mat").arg(sHPIResourceDir).arg(sTimeStamp));
+        UTILSLIB::IOUtils::write_eigen_matrix(m_sensors.rmag, QString("%1/%2_sensorPosNew_mat").arg(sHPIResourceDir).arg(sTimeStamp));
 
-        UTILSLIB::IOUtils::write_eigen_matrix(vecGoF, QString("%1/%2_gof_mat").arg(sHPIResourceDir).arg(sTimeStamp));
+        UTILSLIB::IOUtils::write_eigen_matrix(matCoilPos, QString("%1/%2_coilPosSeedNew_mat").arg(sHPIResourceDir).arg(sTimeStamp));
 
-        UTILSLIB::IOUtils::write_eigen_matrix(coil.pos, QString("%1/%2_coilPos_mat").arg(sHPIResourceDir).arg(sTimeStamp));
+        UTILSLIB::IOUtils::write_eigen_matrix(coil.pos, QString("%1/%2_hpiPosNew_mat").arg(sHPIResourceDir).arg(sTimeStamp));
 
-        UTILSLIB::IOUtils::write_eigen_matrix(matHeadHPI, QString("%1/%2_headHPI_mat").arg(sHPIResourceDir).arg(sTimeStamp));
+        UTILSLIB::IOUtils::write_eigen_matrix(matHeadHPI, QString("%1/%2_headHPINew_mat").arg(sHPIResourceDir).arg(sTimeStamp));
 
         MatrixXd testPosCut = matTestPos.transpose();//block(0,0,3,4);
-        UTILSLIB::IOUtils::write_eigen_matrix(testPosCut, QString("%1/%2_testPos_mat").arg(sHPIResourceDir).arg(sTimeStamp));
+        UTILSLIB::IOUtils::write_eigen_matrix(testPosCut, QString("%1/%2_testPosNew_mat").arg(sHPIResourceDir).arg(sTimeStamp));
 
         MatrixXi matIdx(vecChIdcs.rows(),1);
+        std::cout << vecChIdcs << std::endl;
         matIdx.col(0) = vecChIdcs;
-        UTILSLIB::IOUtils::write_eigen_matrix(matIdx, QString("%1/%2_idx_mat").arg(sHPIResourceDir).arg(sTimeStamp));
+        UTILSLIB::IOUtils::write_eigen_matrix(matIdx, QString("%1/%2_idxNew_mat").arg(sHPIResourceDir).arg(sTimeStamp));
 
         MatrixXd matCoilFreq(vecCoilfreq.rows(),1);
         matCoilFreq.col(0) = vecCoilfreq;
-        UTILSLIB::IOUtils::write_eigen_matrix(matCoilFreq, QString("%1/%2_coilFreq_mat").arg(sHPIResourceDir).arg(sTimeStamp));
+        UTILSLIB::IOUtils::write_eigen_matrix(matCoilFreq, QString("%1/%2_coilFreqNew_mat").arg(sHPIResourceDir).arg(sTimeStamp));
 
-        UTILSLIB::IOUtils::write_eigen_matrix(matDiffPos, QString("%1/%2_diffPos_mat").arg(sHPIResourceDir).arg(sTimeStamp));
+        UTILSLIB::IOUtils::write_eigen_matrix(matDiffPos, QString("%1/%2_diffPosNew_mat").arg(sHPIResourceDir).arg(sTimeStamp));
 
-        UTILSLIB::IOUtils::write_eigen_matrix(matAmp, QString("%1/%2_amp_mat").arg(sHPIResourceDir).arg(sTimeStamp));
+        UTILSLIB::IOUtils::write_eigen_matrix(matAmp, QString("%1/%2_ampNew_mat").arg(sHPIResourceDir).arg(sTimeStamp));
     }
 }
 
@@ -636,7 +629,7 @@ void HPIFit::storeHeadPosition(float fTime,
 void HPIFit::updateSensor()
 {
     // Create MEG-Coils and read data
-    int iAcc = 2;
+    int iAcc = 0;
     int iNch = m_lChannels.size();
 
     if(iNch == 0) {

@@ -96,8 +96,7 @@ int main(int argc, char *argv[])
     parser.setApplicationDescription("hpiFit Example");
     parser.addHelpOption();
     qInfo() << "Please download the mne-cpp-test-data folder from Github (mne-tools) into mne-cpp/bin.";
-    QCommandLineOption inputOption("fileIn", "The input file <in>.", "in", QCoreApplication::applicationDirPath() + "/mne-cpp-test-data/MEG/sample/test_hpiFit_raw.fif");
-
+    QCommandLineOption inputOption("fileIn", "The input file <in>.", "in", QCoreApplication::applicationDirPath() + "/MNE-sample-data/chpi/BabyMeg/201029_182858_TestSubject_lorenzRecord02_raw.fif");
     parser.addOption(inputOption);
 
     parser.process(a);
@@ -140,7 +139,7 @@ int main(int argc, char *argv[])
     MatrixXd matPosition;              // matPosition matrix to save quaternions etc.
 
     // setup informations for HPI fit (VectorView)
-    QVector<int> vecFreqs {154,158,161,166};
+    QVector<int> vecFreqs {155,165,190,200};
     QVector<double> vecError;
     VectorXd vecGoF;
     FiffDigPointSet fittedPointSet;
@@ -164,11 +163,21 @@ int main(int argc, char *argv[])
         matProjectors.col(infoTemp.ch_names.indexOf(infoTemp.bads.at(j))).setZero();
     }
 
+    // Setup Compensator
+    MatrixXd matComp = MatrixXd::Identity(pFiffInfo->chs.size(), pFiffInfo->chs.size());
+    FiffCtfComp newComp;
+    //Do this always from 0 since we always read new raw data, we never actually perform a multiplication on already existing data
+    if(pFiffInfo->make_compensator(0, 101, newComp)) {
+        matComp = newComp.data->data;
+    }
+
+    MatrixXd matCompProjectors = matProjectors * matComp;
+
     // if debugging files are necessary set bDoDebug = true;
     QString sHPIResourceDir = QCoreApplication::applicationDirPath() + "/HPIFittingDebug";
-    bool bDoDebug = false;
+    bool bDoDebug = true;
 
-    HPIFit HPI = HPIFit(pFiffInfo);
+    HPIFit HPI = HPIFit(pFiffInfo,true);
 
     // ordering of frequencies
     from = first + vecTime(0)*pFiffInfo->sfreq;
@@ -177,27 +186,9 @@ int main(int argc, char *argv[])
         qCritical("error during read_raw_segment");
         return -1;
     }
-    qInfo() << "[done]";
-
-    // order frequencies
-    qInfo() << "Find Order...";
-    timer.start();
-    HPI.findOrder(matData,
-                  matProjectors,
-                  pFiffInfo->dev_head_t,
-                  vecFreqs,
-                  vecError,
-                  vecGoF,
-                  fittedPointSet,
-                  pFiffInfo);
-    qInfo() << "Ordered Frequencies: ";
-    qInfo() << "findOrder() took" << timer.elapsed() << "milliseconds";
-    qInfo() << "[done]";
-
-    float fTimer = 0.0;
 
     // read and fit
-    for(int i = 0; i < vecTime.size(); i++) {
+    for(int i = 0; i < 10; i++) {
         from = first + vecTime(i)*pFiffInfo->sfreq;
         to = from + iQuantum;
         if (to > last) {
@@ -209,12 +200,9 @@ int main(int argc, char *argv[])
             qCritical("error during read_raw_segment");
             return -1;
         }
-        qInfo() << "[done]";
 
-        qInfo() << "HPI-Fit...";
-        timer.start();
         HPI.fitHPI(matData,
-                   matProjectors,
+                   matCompProjectors,
                    pFiffInfo->dev_head_t,
                    vecFreqs,
                    vecError,
@@ -223,17 +211,9 @@ int main(int argc, char *argv[])
                    pFiffInfo,
                    bDoDebug,
                    sHPIResourceDir);
-        fTimer = timer.elapsed();
-        qInfo() << "The HPI-Fit took" << fTimer << "milliseconds";
-        qInfo() << "[done]";
-
-        HPIFit::storeHeadPosition(vecTime(i), pFiffInfo->dev_head_t.trans, matPosition, vecGoF, vecError);
-        matPosition(i,9) = fTimer;
-        // if big head displacement occures, update debHeadTrans
-        if(MNEMath::compareTransformation(transDevHead.trans, pFiffInfo->dev_head_t.trans, fThreshRot, fThreshTrans)) {
-            transDevHead = pFiffInfo->dev_head_t;
-            qInfo() << "dev_head_t has been updated.";
-        }
+        double dError = std::accumulate(vecError.begin(), vecError.end(), .0) / vecError.size();
+        qDebug() << "Error:" << vecError;
+        qDebug() << "Mean Error:" << dError * 1000;
     }
     // IOUtils::write_eigen_matrix(matPosition, QCoreApplication::applicationDirPath() + "/MNE-sample-data/position.txt");
 }
