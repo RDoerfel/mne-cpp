@@ -322,8 +322,6 @@ void HPIFit::fitHPI(const MatrixXd& t_mat,
         chIdcs(j) = chIdx;
     }
 
-    std::cout << "Old" << chIdcs << std::endl;
-
     //Find good seed point/starting point for the coil position in 3D space
     //Find biggest amplitude per pickup coil (sensor) and store corresponding sensor channel index
     VectorXi vecChIdcs(iNumCoils);
@@ -337,8 +335,6 @@ void HPIFit::fitHPI(const MatrixXd& t_mat,
         }
         vecChIdcs(j) = iChIdx;
     }
-
-    std::cout << "Old" << vecChIdcs << std::endl;
 
     vecError.resize(iNumCoils);
     double dError = std::accumulate(vecError.begin(), vecError.end(), .0) / vecError.size();
@@ -375,9 +371,6 @@ void HPIFit::fitHPI(const MatrixXd& t_mat,
     }
 
     coil.pos = coilPos;
-
-    std::cout << "old" << "\n" << coilPos << std::endl;
-    std::cout << "new" << "\n" << matCoilPos << std::endl;
 
     // Perform actual localization
     coil = dipfit(coil,

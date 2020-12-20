@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
         matComp = newComp.data->data;
     }
 
-    MatrixXd m_matCompProjectors = matProjectors * matComp;
+    MatrixXd matCompProjectors = matProjectors * matComp;
 
     // if debugging files are necessary set bDoDebug = true;
     QString sHPIResourceDir = QCoreApplication::applicationDirPath() + "/HPIFittingDebug";
@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
         timer.start();
         transDevHead = pFiffInfo->dev_head_t;
         HPI.fitHPI(matData,
-                   matProjectors,
+                   matCompProjectors,
                    transDevHead,
                    vecFreqs,
                    vecError,
