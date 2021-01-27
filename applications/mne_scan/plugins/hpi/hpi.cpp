@@ -293,7 +293,7 @@ void Hpi::updateProjections()
         }
         m_mutex.unlock();
 
-        Eigen::MatrixXd matProjectors = Eigen::MatrixXd::Identity(m_pFiffInfo->chs.size(), m_pFiffInfo->chs.size());
+        m_matProjectors = Eigen::MatrixXd::Identity(m_pFiffInfo->chs.size(), m_pFiffInfo->chs.size());
         Eigen::MatrixXd matComp = Eigen::MatrixXd::Identity(m_pFiffInfo->chs.size(), m_pFiffInfo->chs.size());
 
         if(m_bUseSSP) {
@@ -307,10 +307,10 @@ void Hpi::updateProjections()
             }
 
             //Create the projector for all SSP's on
-            infoTemp.make_projector(matProjectors);
+            infoTemp.make_projector(m_matProjectors);
             //set columns of matrix to zero depending on bad channels indexes
             for(qint32 j = 0; j < infoTemp.bads.size(); ++j) {
-                matProjectors.col(infoTemp.ch_names.indexOf(infoTemp.bads.at(j))).setZero();
+                m_matProjectors.col(infoTemp.ch_names.indexOf(infoTemp.bads.at(j))).setZero();
             }
         }
 
@@ -324,7 +324,7 @@ void Hpi::updateProjections()
         }
 
         m_mutex.lock();
-        m_matCompProjectors = matProjectors * matComp;
+        m_matCompProjectors = m_matProjectors * matComp;
         m_mutex.unlock();
     }
 }
@@ -536,6 +536,7 @@ void Hpi::run()
 
                 // Perform actual fitting
                 m_mutex.lock();
+                matData = m_matCompProjectors * matDataMerged;
                 HPI.fitHPI(matDataMerged,
                            m_matCompProjectors,
                            fitResult.devHeadTrans,
