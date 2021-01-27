@@ -166,9 +166,9 @@ int main(int argc, char *argv[])
 
     // if debugging files are necessary set bDoDebug = true;
     QString sHPIResourceDir = QCoreApplication::applicationDirPath() + "/HPIFittingDebug";
-    bool bDoDebug = false;
+    bool bDoDebug = true;
 
-    HPIFit HPI = HPIFit(pFiffInfo);
+    HPIFit HPI = HPIFit(pFiffInfo,true);
 
     // ordering of frequencies
     from = first + vecTime(0)*pFiffInfo->sfreq;
